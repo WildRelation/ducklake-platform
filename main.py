@@ -22,19 +22,128 @@ init_db()
 _con = get_conn()
 if _con.execute("SELECT COUNT(*) FROM butik.kunder").fetchone()[0] == 0:
     _con.executemany("INSERT INTO butik.kunder VALUES (?, ?, ?, ?)", [
-        (1, "Anna Svensson",   "anna@example.com",  "070-1234567"),
-        (2, "Erik Johansson",  "erik@example.com",  "073-9876543"),
-        (3, "Maria Lindqvist", "maria@example.com", "076-5551234"),
+        (1,  "Anna Svensson",    "anna@example.com",    "070-1234567"),
+        (2,  "Erik Johansson",   "erik@example.com",    "073-9876543"),
+        (3,  "Maria Lindqvist",  "maria@example.com",   "076-5551234"),
+        (4,  "Lars Petersson",   "lars@example.com",    "070-2345678"),
+        (5,  "Sara Nilsson",     "sara@example.com",    "073-3456789"),
+        (6,  "Johan Bergström",  "johan@example.com",   "076-4567890"),
+        (7,  "Karin Holm",       "karin@example.com",   "070-5678901"),
+        (8,  "Mikael Strand",    "mikael@example.com",  "073-6789012"),
+        (9,  "Lena Gustafsson",  "lena@example.com",    "076-7890123"),
+        (10, "Peter Engström",   "peter@example.com",   "070-8901234"),
+        (11, "Helena Björk",     "helena@example.com",  "073-9012345"),
+        (12, "Andreas Lund",     "andreas@example.com", "076-0123456"),
+        (13, "Camilla Åberg",    "camilla@example.com", "070-1122334"),
+        (14, "Daniel Söderberg", "daniel@example.com",  "073-2233445"),
+        (15, "Emma Fransson",    "emma@example.com",    "076-3344556"),
+        (16, "Fredrik Wallin",   "fredrik@example.com", "070-4455667"),
+        (17, "Gunilla Persson",  "gunilla@example.com", "073-5566778"),
+        (18, "Hans Lindberg",    "hans@example.com",    "076-6677889"),
+        (19, "Ingrid Mattsson",  "ingrid@example.com",  "070-7788990"),
+        (20, "Jonas Eriksson",   "jonas@example.com",   "073-8899001"),
     ])
     _con.executemany("INSERT INTO butik.produkter VALUES (?, ?, ?, ?)", [
-        (1, "Laptop",      9999.0, 15),
-        (2, "Hörlurar",     799.0, 50),
-        (3, "Tangentbord", 1299.0, 30),
-        (4, "Mus",          399.0, 80),
+        (1,  "Laptop",           9999.0,  15),
+        (2,  "Hörlurar",          799.0,  50),
+        (3,  "Tangentbord",      1299.0,  30),
+        (4,  "Mus",               399.0,  80),
+        (5,  "Skärm 27\"",       4999.0,  12),
+        (6,  "Webbkamera",        699.0,  40),
+        (7,  "USB-hubb",          299.0,  60),
+        (8,  "Laptop-väska",      499.0,  35),
+        (9,  "Extern SSD 1TB",   1199.0,  25),
+        (10, "Dockningsstation", 2499.0,   8),
+        (11, "Spelkontroll",      899.0,  20),
+        (12, "Högtalare",        1599.0,  18),
+        (13, "Grafikkort",       5999.0,   6),
+        (14, "RAM 32GB",         1499.0,  22),
+        (15, "SSD 2TB intern",   1899.0,  14),
     ])
     _con.executemany("INSERT INTO butik.ordrar (id, kund_id, produkt_id, antal) VALUES (?, ?, ?, ?)", [
-        (1, 1, 1, 1), (2, 1, 2, 2), (3, 2, 3, 1), (4, 3, 4, 3),
+        (1,  1,  1,  1), (2,  1,  2,  2), (3,  2,  3,  1), (4,  3,  4,  3),
+        (5,  4,  5,  1), (6,  4,  6,  1), (7,  5,  7,  2), (8,  5,  8,  1),
+        (9,  6,  9,  1), (10, 6,  10, 1), (11, 7,  11, 1), (12, 7,  2,  1),
+        (13, 8,  12, 2), (14, 8,  3,  1), (15, 9,  13, 1), (16, 9,  14, 2),
+        (17, 10, 15, 1), (18, 10, 1,  1), (19, 11, 4,  4), (20, 11, 7,  1),
+        (21, 12, 5,  1), (22, 12, 6,  2), (23, 13, 8,  1), (24, 13, 9,  1),
+        (25, 14, 10, 1), (26, 14, 11, 2), (27, 15, 12, 1), (28, 15, 2,  3),
+        (29, 16, 3,  2), (30, 16, 4,  1), (31, 17, 1,  1), (32, 17, 13, 1),
+        (33, 18, 14, 4), (34, 18, 15, 1), (35, 19, 5,  2), (36, 19, 6,  1),
+        (37, 20, 7,  3), (38, 20, 8,  2), (39, 1,  9,  1), (40, 2,  10, 1),
+        (41, 3,  11, 1), (42, 4,  12, 2), (43, 5,  13, 1), (44, 6,  14, 2),
+        (45, 7,  15, 1), (46, 8,  1,  1), (47, 9,  2,  2), (48, 10, 3,  1),
     ])
+
+# Seed extra datasets om de inte finns
+_tabeller = [r[0] for r in _con.execute(
+    "SELECT table_name FROM information_schema.tables WHERE table_schema = 'butik'"
+).fetchall()]
+
+if "vader_stockholm" not in _tabeller:
+    _con.execute("""
+        CREATE TABLE butik.vader_stockholm (
+            datum DATE, max_temp DOUBLE, min_temp DOUBLE,
+            nederbörd_mm DOUBLE, soltimmar DOUBLE, vädertyp VARCHAR
+        )
+    """)
+    _con.executemany("INSERT INTO butik.vader_stockholm VALUES (?, ?, ?, ?, ?, ?)", [
+        ("2024-01-01", -2.0, -8.0, 5.2, 1.0, "Snö"),
+        ("2024-01-15", 1.0,  -3.0, 2.1, 2.5, "Mulet"),
+        ("2024-02-01", 3.0,  -1.0, 0.0, 4.0, "Klart"),
+        ("2024-02-15", 2.0,  -2.0, 8.4, 1.5, "Regn"),
+        ("2024-03-01", 6.0,   1.0, 1.0, 5.0, "Halvklart"),
+        ("2024-03-15", 9.0,   3.0, 0.0, 7.0, "Klart"),
+        ("2024-04-01", 12.0,  5.0, 3.3, 8.0, "Halvklart"),
+        ("2024-04-15", 14.0,  7.0, 0.0, 9.5, "Klart"),
+        ("2024-05-01", 17.0,  9.0, 0.0, 11.0, "Klart"),
+        ("2024-05-15", 19.0, 11.0, 2.2, 10.0, "Halvklart"),
+        ("2024-06-01", 22.0, 14.0, 0.0, 13.0, "Klart"),
+        ("2024-06-15", 25.0, 16.0, 0.0, 14.5, "Klart"),
+        ("2024-07-01", 27.0, 18.0, 1.1, 13.0, "Klart"),
+        ("2024-07-15", 24.0, 16.0, 12.0, 8.0, "Åska"),
+        ("2024-08-01", 23.0, 15.0, 0.0, 12.0, "Klart"),
+        ("2024-08-15", 21.0, 13.0, 4.5, 9.0, "Halvklart"),
+        ("2024-09-01", 17.0, 10.0, 6.3, 7.0, "Regn"),
+        ("2024-09-15", 14.0,  8.0, 0.0, 8.0, "Klart"),
+        ("2024-10-01", 10.0,  4.0, 9.1, 4.0, "Regn"),
+        ("2024-10-15",  7.0,  2.0, 3.2, 3.5, "Mulet"),
+        ("2024-11-01",  4.0,  0.0, 7.8, 2.0, "Regn"),
+        ("2024-11-15",  1.0, -2.0, 4.4, 1.0, "Mulet"),
+        ("2024-12-01", -1.0, -5.0, 2.0, 1.5, "Snö"),
+        ("2024-12-15", -3.0, -7.0, 0.0, 2.0, "Klart"),
+    ])
+
+if "befolkning_sverige" not in _tabeller:
+    _con.execute("""
+        CREATE TABLE butik.befolkning_sverige (
+            stad VARCHAR, befolkning INTEGER, yta_km2 DOUBLE,
+            lan VARCHAR, grundat_ar INTEGER
+        )
+    """)
+    _con.executemany("INSERT INTO butik.befolkning_sverige VALUES (?, ?, ?, ?, ?)", [
+        ("Stockholm",   975904, 188.0, "Stockholms län",      1252),
+        ("Göteborg",    583056,  74.0, "Västra Götalands län", 1621),
+        ("Malmö",       347949,  77.0, "Skåne län",           1275),
+        ("Uppsala",     233839, 166.0, "Uppsala län",          1286),
+        ("Linköping",   166674, 131.0, "Östergötlands län",    1287),
+        ("Örebro",      155201,  91.0, "Örebro län",           1610),
+        ("Västerås",    154049,  62.0, "Västmanlands län",     1120),
+        ("Helsingborg", 149280,  81.0, "Skåne län",            1085),
+        ("Norrköping",  143478, 100.0, "Östergötlands län",    1384),
+        ("Jönköping",   143985, 112.0, "Jönköpings län",       1284),
+        ("Lund",         91428,  72.0, "Skåne län",            990),
+        ("Umeå",        130224, 212.0, "Västernorrlands län",  1622),
+        ("Gävle",        102954, 101.0, "Gävleborgs län",      1446),
+        ("Borås",        113138,  96.0, "Västra Götalands län", 1622),
+        ("Södertälje",    99708,  84.0, "Stockholms län",      1350),
+        ("Eskilstuna",   106774,  89.0, "Södermanlands län",   1659),
+        ("Halmstad",      102467, 131.0, "Hallands län",       1307),
+        ("Växjö",         95459, 187.0, "Kronobergs län",      1342),
+        ("Karlstad",       93544, 175.0, "Värmlands län",      1584),
+        ("Sundsvall",      99439, 246.0, "Västernorrlands län", 1621),
+    ])
+
 _con.close()
 
 NAV = '<a href="/">← Tillbaka</a>'
@@ -540,9 +649,11 @@ async def produkts_ordrar(produkt_id: int):
 # ── DATASETS ──────────────────────────────────────────────────────────────────
 
 INBYGGDA_DATASETS = [
-    {"namn": "kunder",    "beskrivning": "Kundregister",          "källa": "inbyggd"},
-    {"namn": "produkter", "beskrivning": "Produktkatalog",        "källa": "inbyggd"},
-    {"namn": "ordrar",    "beskrivning": "Orderhistorik med join", "källa": "inbyggd"},
+    {"namn": "kunder",              "beskrivning": "Kundregister (20 kunder)",                    "källa": "inbyggd"},
+    {"namn": "produkter",           "beskrivning": "Produktkatalog (15 produkter)",               "källa": "inbyggd"},
+    {"namn": "ordrar",              "beskrivning": "Orderhistorik (48 ordrar)",                   "källa": "inbyggd"},
+    {"namn": "vader_stockholm",     "beskrivning": "Väderdata Stockholm 2024 (24 mätpunkter)",    "källa": "inbyggd"},
+    {"namn": "befolkning_sverige",  "beskrivning": "Befolkningsstatistik svenska städer (20 st)", "källa": "inbyggd"},
 ]
 
 
