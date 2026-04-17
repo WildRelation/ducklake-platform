@@ -9,4 +9,6 @@ COPY klient.py .
 
 ENV DATALAKE_URL=https://misty-abnormally-educated.app.cloud.cbh.kth.se
 
-CMD ["python", "klient.py"]
+EXPOSE 8001
+
+CMD ["uvicorn", "klient:app", "--host", "0.0.0.0", "--port", "8001"]
