@@ -28,15 +28,15 @@ DuckLake är ingen server — det är bara filer på disk. Det kan inte ta emot 
 - Python 3.12+
 - Docker
 - Ett konto på [KTH Cloud](https://app.cloud.cbh.kth.se)
-- Ett GitHub-konto med SSH-nyckel tillagd i KTH Cloud
+- Ett GitHub-konto
 
 ---
 
 ## Arkitektur
 
 ```
-python-deployment                    misty-abnormally-educated
-(Python-klient)          →HTTP→      (Datalake — FastAPI + DuckLake)
+<klient-deployment>                  <datalake-deployment>
+(Python-klient)        →HTTP→        (Datalake — FastAPI + DuckLake)
                                               ↓
                                       /app/data (persistent volym)
                                       ├── katalog.duckdb
@@ -50,7 +50,7 @@ python-deployment                    misty-abnormally-educated
 
 ## Steg 1 — Projektstruktur
 
-Skapa följande filstruktur:
+Skapa ett nytt GitHub-repo och klona det lokalt. Skapa sedan följande filstruktur:
 
 ```
 butik-api/
@@ -58,7 +58,6 @@ butik-api/
 ├── database.py        # DuckLake-anslutning
 ├── requirements.txt
 ├── Dockerfile
-├── docker-compose.yml
 ├── .github/
 │   └── workflows/
 │       ├── docker.yml         # Bygger datalake-imagen
@@ -119,34 +118,32 @@ def init_db():
 
 ## Steg 3 — FastAPI-server (datalaken)
 
-`main.py` exponerar datalaken som ett REST API med JSON-endpoints:
+`main.py` exponerar datalaken som ett REST API. Här är grundstrukturen:
 
 ```python
-from fastapi import FastAPI, Form
+import os
+import secrets
+from fastapi import FastAPI, Form, Header, HTTPException, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
 from typing import Optional
 from database import get_conn, init_db
 
+API_KEY = os.getenv("API_KEY", "change-me")
+
+def kontrollera_nyckel(x_api_key: str = Header(...)):
+    if not secrets.compare_digest(x_api_key.encode(), API_KEY.encode()):
+        raise HTTPException(status_code=401, detail="Ogiltig API-nyckel")
+
 app = FastAPI(title="Butik Datalake")
 init_db()
-
-# Seed om databasen är tom
-_con = get_conn()
-if _con.execute("SELECT COUNT(*) FROM butik.kunder").fetchone()[0] == 0:
-    _con.executemany("INSERT INTO butik.kunder VALUES (?, ?, ?, ?)", [
-        (1, "Anna Svensson",   "anna@example.com",  "070-1234567"),
-        (2, "Erik Johansson",  "erik@example.com",  "073-9876543"),
-        (3, "Maria Lindqvist", "maria@example.com", "076-5551234"),
-    ])
-_con.close()
 
 class NyKund(BaseModel):
     namn: str
     email: str
     telefon: Optional[str] = None
 
-# JSON API — används av klienter
+# GET — öppen för alla
 @app.get("/api/kunder")
 async def api_kunder():
     con = get_conn()
@@ -154,7 +151,8 @@ async def api_kunder():
     con.close()
     return [{"id": r[0], "namn": r[1], "email": r[2], "telefon": r[3]} for r in rows]
 
-@app.post("/api/kunder", status_code=201)
+# POST — kräver API-nyckel
+@app.post("/api/kunder", status_code=201, dependencies=[Depends(kontrollera_nyckel)])
 async def api_ny_kund(kund: NyKund):
     con = get_conn()
     nid = con.execute("SELECT COALESCE(MAX(id), 0) + 1 FROM butik.kunder").fetchone()[0]
@@ -163,7 +161,8 @@ async def api_ny_kund(kund: NyKund):
     con.close()
     return {"id": nid, "namn": kund.namn, "email": kund.email}
 
-@app.delete("/api/kunder/{kund_id}")
+# DELETE — kräver API-nyckel
+@app.delete("/api/kunder/{kund_id}", dependencies=[Depends(kontrollera_nyckel)])
 async def api_radera_kund(kund_id: int):
     con = get_conn()
     con.execute("DELETE FROM butik.kunder WHERE id = ?", [kund_id])
@@ -175,7 +174,36 @@ Fullständig kod (inkl. produkter, ordrar, HTML-sidor) finns i repot.
 
 ---
 
-## Steg 4 — Dockerisera datalaken
+## Steg 4 — Autentisering
+
+Skriv-operationer (POST/DELETE) skyddas med en API-nyckel som skickas i headern `X-API-Key`. GET-anrop är öppna för alla — de används av klienter som bara läser data.
+
+### Varför miljövariabel och inte hårdkodad nyckel?
+
+Nyckeln sätts via miljövariabeln `API_KEY` — **aldrig** direkt i koden. Om du skriver nyckeln i koden och pushar till GitHub kan vem som helst läsa den. Med en miljövariabel stannar hemligheten i molnplattformen.
+
+```python
+API_KEY = os.getenv("API_KEY", "change-me")
+```
+
+`"change-me"` är bara en placeholder. I produktion sätter du `API_KEY` som miljövariabel i KTH Cloud (se Steg 8).
+
+### Endpoints som kräver API-nyckel
+
+| Metod | Endpoint | Kräver nyckel |
+|-------|----------|---------------|
+| GET | `/api/kunder` | Nej |
+| GET | `/api/produkter` | Nej |
+| GET | `/api/ordrar` | Nej |
+| POST | `/api/kunder` | **Ja** |
+| POST | `/api/produkter` | **Ja** |
+| POST | `/api/ordrar` | **Ja** |
+| DELETE | `/api/kunder/{id}` | **Ja** |
+| DELETE | `/api/produkter/{id}` | **Ja** |
+
+---
+
+## Steg 5 — Dockerisera datalaken
 
 `Dockerfile`:
 
@@ -204,7 +232,7 @@ python-multipart==0.0.20
 
 ---
 
-## Steg 5 — Python-klienten
+## Steg 6 — Python-klienten
 
 `klient/klient.py` är en FastAPI-app som hämtar data från datalaken och visar den i en webbsida:
 
@@ -214,10 +242,7 @@ import os
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 
-DATALAKE_URL = os.getenv(
-    "DATALAKE_URL",
-    "https://misty-abnormally-educated.app.cloud.cbh.kth.se"
-)
+DATALAKE_URL = os.getenv("DATALAKE_URL", "http://localhost:8000")
 
 app = FastAPI(title="Datalake Klient")
 
@@ -250,14 +275,15 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY klient.py .
-ENV DATALAKE_URL=https://misty-abnormally-educated.app.cloud.cbh.kth.se
 EXPOSE 8001
 CMD ["uvicorn", "klient:app", "--host", "0.0.0.0", "--port", "8001"]
 ```
 
+> **OBS:** `DATALAKE_URL` sätts som miljövariabel i KTH Cloud (se Steg 9) — hårdkoda inte URL:en i Dockerfile.
+
 ---
 
-## Steg 6 — GitHub Actions (CI/CD)
+## Steg 7 — GitHub Actions (CI/CD)
 
 Skapa två workflows — en för datalaken och en för klienten.
 
@@ -325,9 +351,11 @@ jobs:
           tags: ${{ env.IMAGE }}
 ```
 
+Pusha koden till `main` — GitHub Actions bygger automatiskt Docker-bilderna och laddar upp dem till GHCR.
+
 ---
 
-## Steg 7 — SSH-nyckel till KTH Cloud
+## Steg 8 — SSH-nyckel till KTH Cloud
 
 KTH Cloud använder SSH-nycklar för att autentisera deployments. Generera en nyckel och lägg till den i portalen:
 
@@ -340,11 +368,11 @@ Kopiera utskriften och lägg till den under **Account → SSH Keys** på [app.cl
 
 ---
 
-## Steg 8 — Driftsätt datalaken på KTH Cloud
+## Steg 9 — Driftsätt datalaken på KTH Cloud
 
 1. Gå till [app.cloud.cbh.kth.se](https://app.cloud.cbh.kth.se) → **New deployment**
 2. Fyll i:
-   - **Image:** `ghcr.io/wildrelation/butik-api:latest`
+   - **Image:** `ghcr.io/<ditt-github-användarnamn>/<repo-namn>:latest`
    - **Port:** `8000`
    - **Visibility:** Public
 3. Lägg till **persistent storage**:
@@ -354,56 +382,27 @@ Kopiera utskriften och lägg till den under **Account → SSH Keys** på [app.cl
 4. Lägg till **miljövariabler**:
    - `CATALOG_PATH` = `/app/data/katalog.duckdb`
    - `DATA_PATH` = `/app/data/lake/`
-   - `API_KEY` = `<ditt-hemliga-lösenord>` ← **sätt ett starkt lösenord här**
-5. Spara — datalaken är nu live på `https://<namn>.app.cloud.cbh.kth.se`
+   - `API_KEY` = `<ditt-hemliga-lösenord>` ← **välj ett starkt lösenord, skriv det inte i koden**
+5. Spara — datalaken är nu live på `https://<deployment-namn>.app.cloud.cbh.kth.se`
+
+> **Varför persistent storage?** DuckLake lagrar data som filer. Utan en persistent volym försvinner all data varje gång containern startas om.
 
 ---
 
-## Steg 9 — Driftsätt klienten på KTH Cloud
+## Steg 10 — Driftsätt klienten på KTH Cloud
 
 1. Skapa en ny deployment:
-   - **Image:** `ghcr.io/wildrelation/butik-api/klient:latest`
+   - **Image:** `ghcr.io/<ditt-github-användarnamn>/<repo-namn>/klient:latest`
    - **Port:** `8001`
    - **Visibility:** Public
 2. Lägg till miljövariabel:
-   - `DATALAKE_URL` = `https://<datalake-deployment>.app.cloud.cbh.kth.se`
-3. **Ingen persistent storage behövs** — klienten lagrar ingenting
+   - `DATALAKE_URL` = `https://<datalake-deployment-namn>.app.cloud.cbh.kth.se`
+3. **Ingen persistent storage behövs** — klienten lagrar ingenting lokalt
 
 Klienten är nu live och hämtar data från datalaken:
 ```
-https://<klient-deployment>.app.cloud.cbh.kth.se
+https://<klient-deployment-namn>.app.cloud.cbh.kth.se
 ```
-
----
-
-## Steg 10 — Autentisering
-
-Skriv-operationer (POST/DELETE) skyddas med en API-nyckel som skickas i headern `X-API-Key`.
-
-### Varför miljövariabel och inte hårdkodad nyckel?
-
-Nyckeln sätts via miljövariabeln `API_KEY` i KTH Cloud — **aldrig** direkt i koden. Om du skriver nyckeln i koden och pushar till GitHub kan vem som helst läsa den. Med en miljövariabel stannar hemligheten i molnplattformen.
-
-I koden ser det ut så här:
-
-```python
-API_KEY = os.getenv("API_KEY", "change-me")
-```
-
-`"change-me"` är bara en placeholder — i produktion används värdet från miljövariabeln.
-
-### Endpoints som kräver API-nyckel
-
-| Metod | Endpoint | Kräver nyckel |
-|-------|----------|---------------|
-| GET | `/api/kunder` | Nej |
-| GET | `/api/produkter` | Nej |
-| GET | `/api/ordrar` | Nej |
-| POST | `/api/kunder` | **Ja** |
-| POST | `/api/produkter` | **Ja** |
-| POST | `/api/ordrar` | **Ja** |
-| DELETE | `/api/kunder/{id}` | **Ja** |
-| DELETE | `/api/produkter/{id}` | **Ja** |
 
 ---
 
@@ -411,14 +410,12 @@ API_KEY = os.getenv("API_KEY", "change-me")
 
 Java-klienter ansluter via HTTP mot datalakens API. GET-anrop behöver ingen nyckel. POST/DELETE kräver headern `X-API-Key`.
 
-Exempel med Java (HttpClient):
-
 ```java
 HttpClient client = HttpClient.newHttpClient();
 
 // Hämta alla kunder (ingen nyckel krävs)
 HttpRequest request = HttpRequest.newBuilder()
-    .uri(URI.create("https://misty-abnormally-educated.app.cloud.cbh.kth.se/api/kunder"))
+    .uri(URI.create("https://<datalake-deployment>.app.cloud.cbh.kth.se/api/kunder"))
     .GET()
     .build();
 HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -427,7 +424,7 @@ System.out.println(response.body());
 // Skapa ny kund (kräver API-nyckel)
 String json = "{\"namn\":\"Java Klient\",\"email\":\"java@example.com\"}";
 HttpRequest postRequest = HttpRequest.newBuilder()
-    .uri(URI.create("https://misty-abnormally-educated.app.cloud.cbh.kth.se/api/kunder"))
+    .uri(URI.create("https://<datalake-deployment>.app.cloud.cbh.kth.se/api/kunder"))
     .header("Content-Type", "application/json")
     .header("X-API-Key", "ditt-hemliga-lösenord")
     .POST(HttpRequest.BodyPublishers.ofString(json))
@@ -437,7 +434,7 @@ System.out.println(postResponse.body());
 
 // Radera kund (kräver API-nyckel)
 HttpRequest deleteRequest = HttpRequest.newBuilder()
-    .uri(URI.create("https://misty-abnormally-educated.app.cloud.cbh.kth.se/api/kunder/1"))
+    .uri(URI.create("https://<datalake-deployment>.app.cloud.cbh.kth.se/api/kunder/1"))
     .header("X-API-Key", "ditt-hemliga-lösenord")
     .DELETE()
     .build();
