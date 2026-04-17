@@ -12,6 +12,7 @@ COPY . .
 
 ENV CATALOG_PATH=/app/data/katalog.duckdb
 ENV DATA_PATH=/app/data/lake/
+ENV DATABASE_URL=postgresql://postgres:password@localhost:5432/butik
 
 RUN mkdir -p /app/data/lake && python seed.py
 

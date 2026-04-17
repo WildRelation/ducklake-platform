@@ -8,6 +8,7 @@ services:
     environment:
       - CATALOG_PATH=/app/data/katalog.duckdb
       - DATA_PATH=/app/data/lake/
+      - DATABASE_URL=postgresql://postgres:password@worthy-continually-diaphragm:5432/butik
 
 volumes:
   duckdb_data:

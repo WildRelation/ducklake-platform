@@ -1,10 +1,15 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.responses import HTMLResponse
+from sqlalchemy.orm import Session
+from sqlalchemy import text
 from database import get_conn, init_db
+from pg_database import get_pg, init_pg, seed_pg
 
 app = FastAPI(title="Butik API")
 
 init_db()
+init_pg()
+seed_pg()
 
 NAV = '<a href="/">← Tillbaka</a>'
 STYLE = """
@@ -33,15 +38,23 @@ def page(title: str, body: str) -> str:
 async def index():
     return page("Butik", """
         <div class='card'>
-            <h1>Välkommen till Butik-API <span class='badge'>DuckLake</span></h1>
-            <p>Data lagras som Parquet-filer via DuckLake.</p>
+            <h1>Välkommen till Butik-API</h1>
+            <h3>DuckLake <span class='badge'>Parquet</span></h3>
             <nav>
                 <a href='/kunder'>Kunder</a>
                 <a href='/produkter'>Produkter</a>
                 <a href='/ordrar'>Ordrar</a>
                 <a href='/snapshots'>Snapshots</a>
-                <a href='/docs'>API-docs</a>
             </nav>
+            <br>
+            <h3>PostgreSQL <span class='badge'>KTH Cloud</span></h3>
+            <nav>
+                <a href='/pg/kunder'>Kunder</a>
+                <a href='/pg/produkter'>Produkter</a>
+                <a href='/pg/ordrar'>Ordrar</a>
+            </nav>
+            <br>
+            <a href='/docs'>API-dokumentation</a>
         </div>
     """)
 
@@ -101,3 +114,30 @@ async def visa_snapshots():
             {rader}
         </table>
     """)
+
+
+@app.get("/pg/kunder", response_class=HTMLResponse)
+async def pg_kunder(db: Session = Depends(get_pg)):
+    rows = db.execute(text("SELECT id, namn, email, telefon FROM kunder ORDER BY id")).fetchall()
+    rader = "".join(f"<tr><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td><td>{r[3]}</td></tr>" for r in rows)
+    return page("PG Kunder", f"<h1>Kunder <span class='badge'>PostgreSQL</span></h1>{NAV}<table><tr><th>ID</th><th>Namn</th><th>E-post</th><th>Telefon</th></tr>{rader}</table>")
+
+
+@app.get("/pg/produkter", response_class=HTMLResponse)
+async def pg_produkter(db: Session = Depends(get_pg)):
+    rows = db.execute(text("SELECT id, namn, pris, lagersaldo FROM produkter ORDER BY id")).fetchall()
+    rader = "".join(f"<tr><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]:.2f} kr</td><td>{r[3]}</td></tr>" for r in rows)
+    return page("PG Produkter", f"<h1>Produkter <span class='badge'>PostgreSQL</span></h1>{NAV}<table><tr><th>ID</th><th>Namn</th><th>Pris</th><th>Lagersaldo</th></tr>{rader}</table>")
+
+
+@app.get("/pg/ordrar", response_class=HTMLResponse)
+async def pg_ordrar(db: Session = Depends(get_pg)):
+    rows = db.execute(text("""
+        SELECT o.id, k.namn, p.namn, o.antal, o.skapad
+        FROM ordrar o
+        JOIN kunder k ON k.id = o.kund_id
+        JOIN produkter p ON p.id = o.produkt_id
+        ORDER BY o.id
+    """)).fetchall()
+    rader = "".join(f"<tr><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td><td>{r[3]}</td><td>{str(r[4])[:16]}</td></tr>" for r in rows)
+    return page("PG Ordrar", f"<h1>Ordrar <span class='badge'>PostgreSQL</span></h1>{NAV}<table><tr><th>ID</th><th>Kund</th><th>Produkt</th><th>Antal</th><th>Datum</th></tr>{rader}</table>")
