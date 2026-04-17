@@ -5,6 +5,9 @@ services:
       - "8000:8000"
     volumes:
       - duckdb_data:/app/data
+    environment:
+      - CATALOG_PATH=/app/data/katalog.duckdb
+      - DATA_PATH=/app/data/lake/
 
 volumes:
   duckdb_data:
