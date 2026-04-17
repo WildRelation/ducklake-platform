@@ -1,10 +1,11 @@
-from fastapi import FastAPI, Form, Header, HTTPException, Depends
+from fastapi import FastAPI, Form, Header, HTTPException, Depends, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse
 from database import get_conn, init_db
 from pydantic import BaseModel
 from typing import Optional
 import os
 import secrets
+import tempfile
 
 API_KEY = os.getenv("API_KEY", "change-me")
 
@@ -534,3 +535,68 @@ async def produkts_ordrar(produkt_id: int):
         "produkt": {"id": produkt[0], "namn": produkt[1], "pris": produkt[2]},
         "ordrar": [{"order_id": r[0], "kund": r[1], "email": r[2], "antal": r[3], "skapad": str(r[4])} for r in rows]
     }
+
+
+# ── DATASETS ──────────────────────────────────────────────────────────────────
+
+INBYGGDA_DATASETS = [
+    {"namn": "kunder",    "beskrivning": "Kundregister",          "källa": "inbyggd"},
+    {"namn": "produkter", "beskrivning": "Produktkatalog",        "källa": "inbyggd"},
+    {"namn": "ordrar",    "beskrivning": "Orderhistorik med join", "källa": "inbyggd"},
+]
+
+
+@app.get("/api/datasets")
+async def lista_datasets():
+    con = get_conn()
+    tabeller = con.execute("""
+        SELECT table_name FROM information_schema.tables
+        WHERE table_schema = 'butik'
+          AND table_name NOT IN ('kunder', 'produkter', 'ordrar')
+        ORDER BY table_name
+    """).fetchall()
+    con.close()
+    uppladdade = [{"namn": r[0], "beskrivning": "Uppladdad fil", "källa": "uppladdad"} for r in tabeller]
+    return INBYGGDA_DATASETS + uppladdade
+
+
+@app.get("/api/datasets/{namn}")
+async def hamta_dataset(namn: str, limit: int = 100):
+    con = get_conn()
+    tabeller = [r[0] for r in con.execute(
+        "SELECT table_name FROM information_schema.tables WHERE table_schema = 'butik'"
+    ).fetchall()]
+    if namn not in tabeller:
+        con.close()
+        raise HTTPException(status_code=404, detail=f"Dataset '{namn}' hittades inte")
+    kolumner = [r[0] for r in con.execute(
+        f"SELECT column_name FROM information_schema.columns WHERE table_schema = 'butik' AND table_name = '{namn}' ORDER BY ordinal_position"
+    ).fetchall()]
+    rows = con.execute(f"SELECT * FROM butik.{namn} LIMIT {limit}").fetchall()
+    con.close()
+    return {
+        "namn": namn,
+        "kolumner": kolumner,
+        "antal_rader": len(rows),
+        "data": [dict(zip(kolumner, r)) for r in rows]
+    }
+
+
+@app.post("/api/datasets/upload", status_code=201, dependencies=[Depends(kontrollera_nyckel)])
+async def ladda_upp_dataset(fil: UploadFile = File(...), tabellnamn: str = Form(...)):
+    if not tabellnamn.isidentifier():
+        raise HTTPException(status_code=400, detail="Ogiltigt tabellnamn — använd bara bokstäver, siffror och _")
+    suffix = ".csv" if fil.filename.endswith(".csv") else ".parquet"
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+        tmp.write(await fil.read())
+        tmp_path = tmp.name
+    try:
+        con = get_conn()
+        if suffix == ".csv":
+            con.execute(f"CREATE TABLE butik.{tabellnamn} AS SELECT * FROM read_csv_auto(?)", [tmp_path])
+        else:
+            con.execute(f"CREATE TABLE butik.{tabellnamn} AS SELECT * FROM read_parquet(?)", [tmp_path])
+        con.close()
+    finally:
+        os.unlink(tmp_path)
+    return {"namn": tabellnamn, "fil": fil.filename, "status": "skapad"}
