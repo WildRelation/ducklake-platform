@@ -354,6 +354,7 @@ Kopiera utskriften och lägg till den under **Account → SSH Keys** på [app.cl
 4. Lägg till **miljövariabler**:
    - `CATALOG_PATH` = `/app/data/katalog.duckdb`
    - `DATA_PATH` = `/app/data/lake/`
+   - `API_KEY` = `<ditt-hemliga-lösenord>` ← **sätt ett starkt lösenord här**
 5. Spara — datalaken är nu live på `https://<namn>.app.cloud.cbh.kth.se`
 
 ---
@@ -375,29 +376,47 @@ https://<klient-deployment>.app.cloud.cbh.kth.se
 
 ---
 
-## Steg 10 — Anslutning för Java-klienter
+## Steg 10 — Autentisering
 
-Java-klienter ansluter på exakt samma sätt via HTTP mot datalakens API.
+Skriv-operationer (POST/DELETE) skyddas med en API-nyckel som skickas i headern `X-API-Key`.
 
-Tillgängliga endpoints:
+### Varför miljövariabel och inte hårdkodad nyckel?
 
-| Metod | Endpoint | Beskrivning |
-|-------|----------|-------------|
-| GET | `/api/kunder` | Hämta alla kunder |
-| GET | `/api/produkter` | Hämta alla produkter |
-| GET | `/api/ordrar` | Hämta alla ordrar |
-| POST | `/api/kunder` | Skapa ny kund |
-| POST | `/api/produkter` | Skapa ny produkt |
-| POST | `/api/ordrar` | Skapa ny order |
-| DELETE | `/api/kunder/{id}` | Radera kund |
-| DELETE | `/api/produkter/{id}` | Radera produkt |
+Nyckeln sätts via miljövariabeln `API_KEY` i KTH Cloud — **aldrig** direkt i koden. Om du skriver nyckeln i koden och pushar till GitHub kan vem som helst läsa den. Med en miljövariabel stannar hemligheten i molnplattformen.
+
+I koden ser det ut så här:
+
+```python
+API_KEY = os.getenv("API_KEY", "change-me")
+```
+
+`"change-me"` är bara en placeholder — i produktion används värdet från miljövariabeln.
+
+### Endpoints som kräver API-nyckel
+
+| Metod | Endpoint | Kräver nyckel |
+|-------|----------|---------------|
+| GET | `/api/kunder` | Nej |
+| GET | `/api/produkter` | Nej |
+| GET | `/api/ordrar` | Nej |
+| POST | `/api/kunder` | **Ja** |
+| POST | `/api/produkter` | **Ja** |
+| POST | `/api/ordrar` | **Ja** |
+| DELETE | `/api/kunder/{id}` | **Ja** |
+| DELETE | `/api/produkter/{id}` | **Ja** |
+
+---
+
+## Steg 11 — Anslutning för Java-klienter
+
+Java-klienter ansluter via HTTP mot datalakens API. GET-anrop behöver ingen nyckel. POST/DELETE kräver headern `X-API-Key`.
 
 Exempel med Java (HttpClient):
 
 ```java
 HttpClient client = HttpClient.newHttpClient();
 
-// Hämta alla kunder
+// Hämta alla kunder (ingen nyckel krävs)
 HttpRequest request = HttpRequest.newBuilder()
     .uri(URI.create("https://misty-abnormally-educated.app.cloud.cbh.kth.se/api/kunder"))
     .GET()
@@ -405,15 +424,25 @@ HttpRequest request = HttpRequest.newBuilder()
 HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 System.out.println(response.body());
 
-// Skapa ny kund
+// Skapa ny kund (kräver API-nyckel)
 String json = "{\"namn\":\"Java Klient\",\"email\":\"java@example.com\"}";
 HttpRequest postRequest = HttpRequest.newBuilder()
     .uri(URI.create("https://misty-abnormally-educated.app.cloud.cbh.kth.se/api/kunder"))
     .header("Content-Type", "application/json")
+    .header("X-API-Key", "ditt-hemliga-lösenord")
     .POST(HttpRequest.BodyPublishers.ofString(json))
     .build();
 HttpResponse<String> postResponse = client.send(postRequest, HttpResponse.BodyHandlers.ofString());
 System.out.println(postResponse.body());
+
+// Radera kund (kräver API-nyckel)
+HttpRequest deleteRequest = HttpRequest.newBuilder()
+    .uri(URI.create("https://misty-abnormally-educated.app.cloud.cbh.kth.se/api/kunder/1"))
+    .header("X-API-Key", "ditt-hemliga-lösenord")
+    .DELETE()
+    .build();
+HttpResponse<String> deleteResponse = client.send(deleteRequest, HttpResponse.BodyHandlers.ofString());
+System.out.println(deleteResponse.body());
 ```
 
 ---
