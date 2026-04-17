@@ -1,0 +1,10 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - duckdb_data:/app/data
+
+volumes:
+  duckdb_data:
