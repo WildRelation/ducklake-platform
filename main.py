@@ -388,6 +388,9 @@ async def api_radera_kund(kund_id: int):
     con.close()
     return {"deleted": kund_id}
 
+@app.get("/healthz")
+async def health():
+    return {"status": "ok"}
 
 @app.delete("/api/produkter/{produkt_id}", dependencies=[Depends(kontrollera_nyckel)])
 async def api_radera_produkt(produkt_id: int):
