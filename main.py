@@ -6,7 +6,7 @@ from typing import Optional
 import os
 import secrets
 
-API_KEY = os.getenv("API_KEY", "hemlig-nyckel")
+API_KEY = os.getenv("API_KEY", "change-me")
 
 
 def kontrollera_nyckel(x_api_key: str = Header(...)):
