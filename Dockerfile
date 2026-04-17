@@ -5,16 +5,11 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Förinstallera ducklake-tillägget så containern inte behöver nätverket vid start
 RUN python3 -c "import duckdb; con = duckdb.connect(); con.execute('INSTALL ducklake')"
 
 COPY . .
 
-ENV CATALOG_PATH=/app/data/katalog.duckdb
-ENV DATA_PATH=/app/data/lake/
-ENV DATABASE_URL=postgresql://postgres:password@localhost:5432/butik
-
-RUN mkdir -p /app/data/lake && python seed.py
+ENV DATABASE_URL=postgresql://postgres:password@worthy-continually-diaphragm:5432/butik
 
 EXPOSE 8000
 

@@ -2,12 +2,17 @@ from fastapi import FastAPI, Depends
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-from database import get_conn, init_db
 from pg_database import get_pg, init_pg, seed_pg
+import os
+
+DUCKLAKE_ENABLED = bool(os.getenv("CATALOG_PATH"))
+
+if DUCKLAKE_ENABLED:
+    from database import get_conn, init_db
+    init_db()
 
 app = FastAPI(title="Butik API")
 
-init_db()
 init_pg()
 seed_pg()
 
@@ -36,17 +41,20 @@ def page(title: str, body: str) -> str:
 
 @app.get("/", response_class=HTMLResponse)
 async def index():
-    return page("Butik", """
+    ducklake_section = """
+        <h3>DuckLake <span class='badge'>Parquet</span></h3>
+        <nav>
+            <a href='/kunder'>Kunder</a>
+            <a href='/produkter'>Produkter</a>
+            <a href='/ordrar'>Ordrar</a>
+            <a href='/snapshots'>Snapshots</a>
+        </nav>
+        <br>
+    """ if DUCKLAKE_ENABLED else ""
+    return page("Butik", f"""
         <div class='card'>
             <h1>Välkommen till Butik-API</h1>
-            <h3>DuckLake <span class='badge'>Parquet</span></h3>
-            <nav>
-                <a href='/kunder'>Kunder</a>
-                <a href='/produkter'>Produkter</a>
-                <a href='/ordrar'>Ordrar</a>
-                <a href='/snapshots'>Snapshots</a>
-            </nav>
-            <br>
+            {ducklake_section}
             <h3>PostgreSQL <span class='badge'>KTH Cloud</span></h3>
             <nav>
                 <a href='/pg/kunder'>Kunder</a>
