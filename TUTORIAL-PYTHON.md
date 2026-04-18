@@ -57,7 +57,7 @@ Exempel på hur det kan se ut i verkligheten:
 Skapa ett nytt GitHub-repo och klona det lokalt. Skapa sedan följande filstruktur:
 
 ```
-ducklake-platform/
+<repo-namn>/
 ├── main.py            # FastAPI-app (datalaken)
 ├── database.py        # DuckLake-anslutning
 ├── requirements.txt
@@ -139,7 +139,7 @@ def kontrollera_nyckel(x_api_key: str = Header(...)):
     if not secrets.compare_digest(x_api_key.encode(), API_KEY.encode()):
         raise HTTPException(status_code=401, detail="Ogiltig API-nyckel")
 
-app = FastAPI(title="Butik Datalake")
+app = FastAPI(title="Min Datalake")
 init_db()
 
 class NyKund(BaseModel):
