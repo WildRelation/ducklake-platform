@@ -45,7 +45,7 @@ Du behöver inte bygga datalaken själv — använd den färdiga Docker-imagen.
 
 1. Gå till [app.cloud.cbh.kth.se](https://app.cloud.cbh.kth.se) → **New deployment**
 2. Fyll i:
-   - **Image:** `ghcr.io/wildrelation/ducklake-platform:latest`
+   - **Image:** `ghcr.io/<ditt-github-användarnamn>/<repo-namn>:latest`
    - **Port:** `8000`
    - **Visibility:** Public
 3. Lägg till **persistent storage**:
