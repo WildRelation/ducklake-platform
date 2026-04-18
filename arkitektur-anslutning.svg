@@ -1,0 +1,129 @@
+<svg width="900" height="580" xmlns="http://www.w3.org/2000/svg" font-family="Arial, sans-serif">
+
+  <!-- Background -->
+  <rect width="900" height="580" fill="#f8f9fa"/>
+
+  <!-- Title -->
+  <text x="450" y="35" text-anchor="middle" font-size="20" font-weight="bold" fill="#20232a">Hur ansluter Python och Java till DuckLake?</text>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- SHARED: DuckLake Storage (bottom center) -->
+  <!-- ═══════════════════════════════════════════════════ -->
+
+  <rect x="270" y="450" width="160" height="55" rx="8" fill="#e2d9f3" stroke="#6f42c1" stroke-width="2"/>
+  <text x="350" y="473" text-anchor="middle" font-size="12" font-weight="bold" fill="#6f42c1">PostgreSQL</text>
+  <text x="350" y="490" text-anchor="middle" font-size="10" fill="#555">DuckLake katalog</text>
+
+  <rect x="470" y="450" width="160" height="55" rx="8" fill="#fde8d8" stroke="#fd7e14" stroke-width="2"/>
+  <text x="550" y="473" text-anchor="middle" font-size="12" font-weight="bold" fill="#fd7e14">MinIO / S3</text>
+  <text x="550" y="490" text-anchor="middle" font-size="10" fill="#555">Parquet-filer</text>
+
+  <rect x="250" y="420" width="400" height="110" rx="10" fill="none" stroke="#28a745" stroke-width="2" stroke-dasharray="6"/>
+  <text x="450" y="415" text-anchor="middle" font-size="11" fill="#28a745" font-weight="bold">DuckLake</text>
+  <text x="450" y="545" text-anchor="middle" font-size="10" fill="#28a745">KTH Cloud</text>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- LEFT: Python -->
+  <!-- ═══════════════════════════════════════════════════ -->
+
+  <rect x="20" y="60" width="380" height="340" rx="12" fill="white" stroke="#0d6efd" stroke-width="2"/>
+  <rect x="20" y="60" width="380" height="38" rx="12" fill="#0d6efd"/>
+  <rect x="20" y="86" width="380" height="12" fill="#0d6efd"/>
+  <text x="210" y="85" text-anchor="middle" font-size="14" font-weight="bold" fill="white">Python</text>
+
+  <!-- Python klient -->
+  <rect x="45" y="115" width="130" height="50" rx="8" fill="#cfe2ff" stroke="#0d6efd" stroke-width="1.5"/>
+  <text x="110" y="136" text-anchor="middle" font-size="12" font-weight="bold" fill="#0d6efd">Klient</text>
+  <text x="110" y="152" text-anchor="middle" font-size="10" fill="#444">Python / Java / Browser</text>
+
+  <!-- Arrow HTTP -->
+  <line x1="175" y1="140" x2="225" y2="140" stroke="#555" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="200" y="132" text-anchor="middle" font-size="10" fill="#555">HTTP</text>
+
+  <!-- FastAPI box -->
+  <rect x="225" y="108" width="150" height="65" rx="8" fill="#d1ecf1" stroke="#17a2b8" stroke-width="1.5"/>
+  <text x="300" y="130" text-anchor="middle" font-size="12" font-weight="bold" fill="#17a2b8">FastAPI</text>
+  <text x="300" y="147" text-anchor="middle" font-size="10" fill="#444">Python web-server</text>
+  <text x="300" y="162" text-anchor="middle" font-size="10" fill="#888">port 8000</text>
+
+  <!-- Arrow down FastAPI → DuckDB -->
+  <line x1="300" y1="173" x2="300" y2="215" stroke="#555" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="318" y="198" text-anchor="middle" font-size="10" fill="#555">direkt</text>
+
+  <!-- DuckDB Python -->
+  <rect x="205" y="215" width="190" height="55" rx="8" fill="#fff3cd" stroke="#ffc107" stroke-width="1.5"/>
+  <text x="300" y="237" text-anchor="middle" font-size="12" font-weight="bold" fill="#856404">DuckDB</text>
+  <text x="300" y="253" text-anchor="middle" font-size="10" fill="#444">Python-bibliotek (duckdb)</text>
+  <text x="300" y="265" text-anchor="middle" font-size="10" fill="#888">inbyggt i FastAPI-processen</text>
+
+  <!-- Arrows to storage -->
+  <line x1="255" y1="270" x2="255" y2="420" stroke="#6f42c1" stroke-width="1.5" stroke-dasharray="5" marker-end="url(#arr-purple)"/>
+  <text x="230" y="350" text-anchor="middle" font-size="10" fill="#6f42c1" transform="rotate(-90,230,350)">katalog</text>
+
+  <line x1="340" y1="270" x2="530" y2="420" stroke="#fd7e14" stroke-width="1.5" stroke-dasharray="5" marker-end="url(#arr-orange)"/>
+  <text x="465" y="335" text-anchor="middle" font-size="10" fill="#fd7e14">Parquet</text>
+
+  <!-- Note -->
+  <rect x="40" y="295" width="340" height="90" rx="8" fill="#f0f7ff" stroke="#0d6efd" stroke-width="1"/>
+  <text x="210" y="315" text-anchor="middle" font-size="11" font-weight="bold" fill="#0d6efd">Hur det fungerar:</text>
+  <text x="210" y="333" text-anchor="middle" font-size="10" fill="#333">1. Klient skickar HTTP-anrop till FastAPI</text>
+  <text x="210" y="350" text-anchor="middle" font-size="10" fill="#333">2. FastAPI kör SQL via duckdb-biblioteket</text>
+  <text x="210" y="367" text-anchor="middle" font-size="10" fill="#333">3. DuckDB hämtar katalog från PostgreSQL</text>
+  <text x="210" y="384" text-anchor="middle" font-size="10" fill="#333">4. DuckDB läser/skriver Parquet via MinIO</text>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- RIGHT: Java -->
+  <!-- ═══════════════════════════════════════════════════ -->
+
+  <rect x="500" y="60" width="380" height="340" rx="12" fill="white" stroke="#dc3545" stroke-width="2"/>
+  <rect x="500" y="60" width="380" height="38" rx="12" fill="#dc3545"/>
+  <rect x="500" y="86" width="380" height="12" fill="#dc3545"/>
+  <text x="690" y="85" text-anchor="middle" font-size="14" font-weight="bold" fill="white">Java</text>
+
+  <!-- Spring Boot box -->
+  <rect x="525" y="108" width="330" height="65" rx="8" fill="#f8d7da" stroke="#dc3545" stroke-width="1.5"/>
+  <text x="690" y="130" text-anchor="middle" font-size="12" font-weight="bold" fill="#dc3545">Spring Boot App</text>
+  <text x="690" y="147" text-anchor="middle" font-size="10" fill="#444">Java web-server</text>
+  <text x="690" y="162" text-anchor="middle" font-size="10" fill="#888">port 8080</text>
+
+  <!-- Arrow down Spring → DuckDB -->
+  <line x1="690" y1="173" x2="690" y2="215" stroke="#555" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="710" y="198" text-anchor="middle" font-size="10" fill="#555">JDBC</text>
+
+  <!-- DuckDB Java -->
+  <rect x="575" y="215" width="230" height="55" rx="8" fill="#fff3cd" stroke="#ffc107" stroke-width="1.5"/>
+  <text x="690" y="237" text-anchor="middle" font-size="12" font-weight="bold" fill="#856404">DuckDB</text>
+  <text x="690" y="253" text-anchor="middle" font-size="10" fill="#444">JDBC-driver (duckdb-jdbc)</text>
+  <text x="690" y="265" text-anchor="middle" font-size="10" fill="#888">inbyggt i Spring Boot-processen</text>
+
+  <!-- Arrows to storage -->
+  <line x1="645" y1="270" x2="390" y2="420" stroke="#6f42c1" stroke-width="1.5" stroke-dasharray="5" marker-end="url(#arr-purple)"/>
+  <text x="490" y="330" text-anchor="middle" font-size="10" fill="#6f42c1">katalog</text>
+
+  <line x1="735" y1="270" x2="570" y2="420" stroke="#fd7e14" stroke-width="1.5" stroke-dasharray="5" marker-end="url(#arr-orange)"/>
+  <text x="680" y="330" text-anchor="middle" font-size="10" fill="#fd7e14">Parquet</text>
+
+  <!-- Note -->
+  <rect x="520" y="295" width="340" height="90" rx="8" fill="#fff0f0" stroke="#dc3545" stroke-width="1"/>
+  <text x="690" y="315" text-anchor="middle" font-size="11" font-weight="bold" fill="#dc3545">Hur det fungerar:</text>
+  <text x="690" y="333" text-anchor="middle" font-size="10" fill="#333">1. Spring Boot laddar DuckDB via JDBC</text>
+  <text x="690" y="350" text-anchor="middle" font-size="10" fill="#333">2. Kör SQL direkt utan HTTP-mellanhand</text>
+  <text x="690" y="367" text-anchor="middle" font-size="10" fill="#333">3. DuckDB hämtar katalog från PostgreSQL</text>
+  <text x="690" y="384" text-anchor="middle" font-size="10" fill="#333">4. DuckDB läser/skriver Parquet via MinIO</text>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- Arrow markers -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#555"/>
+    </marker>
+    <marker id="arr-purple" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#6f42c1"/>
+    </marker>
+    <marker id="arr-orange" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#fd7e14"/>
+    </marker>
+  </defs>
+
+</svg>
