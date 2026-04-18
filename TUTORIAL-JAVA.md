@@ -18,7 +18,7 @@ Din Java-app  →  HTTP  →  Datalake API  →  DuckLake-filer
 
 - Java 11 eller senare (HttpClient är inbyggt)
 - En driftsatt datalake — antingen:
-  - **Egen:** följ [TUTORIAL-PYTHON.md](TUTORIAL-PYTHON.md) för att sätta upp din egen
+  - **Egen:** följ [TUTORIAL-DUCKLAKE.md](TUTORIAL-DUCKLAKE.md) för att sätta upp din egen
   - **Delad:** använd en URL som du fått av din lärare
 
 ---
