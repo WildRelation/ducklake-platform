@@ -77,7 +77,7 @@ if _con.execute("SELECT COUNT(*) FROM butik.kunder").fetchone()[0] == 0:
 
 # Seed extra datasets om de inte finns
 _tabeller = [r[0] for r in _con.execute(
-    "SELECT table_name FROM information_schema.tables WHERE table_catalog = 'butik'"
+    "SELECT table_name FROM duckdb_tables() WHERE database_name = 'butik'"
 ).fetchall()]
 
 if "vader_stockholm" not in _tabeller:
@@ -661,8 +661,8 @@ INBYGGDA_DATASETS = [
 async def lista_datasets():
     con = get_conn()
     tabeller = con.execute("""
-        SELECT table_name FROM information_schema.tables
-        WHERE table_catalog = 'butik'
+        SELECT table_name FROM duckdb_tables()
+        WHERE database_name = 'butik'
           AND table_name NOT IN ('kunder', 'produkter', 'ordrar')
         ORDER BY table_name
     """).fetchall()
@@ -675,13 +675,13 @@ async def lista_datasets():
 async def hamta_dataset(namn: str, limit: int = 100):
     con = get_conn()
     tabeller = [r[0] for r in con.execute(
-        "SELECT table_name FROM information_schema.tables WHERE table_catalog = 'butik'"
+        "SELECT table_name FROM duckdb_tables() WHERE database_name = 'butik'"
     ).fetchall()]
     if namn not in tabeller:
         con.close()
         raise HTTPException(status_code=404, detail=f"Dataset '{namn}' hittades inte")
     kolumner = [r[0] for r in con.execute(
-        f"SELECT column_name FROM information_schema.columns WHERE table_catalog = 'butik' AND table_name = '{namn}' ORDER BY ordinal_position"
+        f"SELECT column_name FROM duckdb_columns() WHERE database_name = 'butik' AND table_name = '{namn}' ORDER BY column_index"
     ).fetchall()]
     rows = con.execute(f"SELECT * FROM butik.{namn} LIMIT {limit}").fetchall()
     con.close()
