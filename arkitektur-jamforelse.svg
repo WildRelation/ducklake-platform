@@ -1,0 +1,116 @@
+<svg width="900" height="500" xmlns="http://www.w3.org/2000/svg" font-family="Arial, sans-serif">
+
+  <!-- Background -->
+  <rect width="900" height="500" fill="#f8f9fa"/>
+
+  <!-- Title -->
+  <text x="450" y="35" text-anchor="middle" font-size="20" font-weight="bold" fill="#20232a">Arkitekturjämförelse — DuckLake</text>
+
+  <!-- ── LEFT: Din lösning ───────────────────────────── -->
+  <rect x="30" y="55" width="390" height="420" rx="12" fill="white" stroke="#0d6efd" stroke-width="2"/>
+  <rect x="30" y="55" width="390" height="40" rx="12" fill="#0d6efd"/>
+  <rect x="30" y="83" width="390" height="12" fill="#0d6efd"/>
+  <text x="225" y="82" text-anchor="middle" font-size="14" font-weight="bold" fill="white">Din lösning (GitHub)</text>
+
+  <!-- Klient -->
+  <rect x="60" y="115" width="160" height="50" rx="8" fill="#cfe2ff" stroke="#0d6efd" stroke-width="1.5"/>
+  <text x="140" y="136" text-anchor="middle" font-size="12" font-weight="bold" fill="#0d6efd">Java / Python</text>
+  <text x="140" y="153" text-anchor="middle" font-size="11" fill="#444">Klient</text>
+
+  <!-- Arrow HTTP -->
+  <line x1="220" y1="140" x2="270" y2="140" stroke="#666" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="245" y="132" text-anchor="middle" font-size="10" fill="#666">HTTP</text>
+
+  <!-- FastAPI -->
+  <rect x="270" y="115" width="130" height="50" rx="8" fill="#d1ecf1" stroke="#17a2b8" stroke-width="1.5"/>
+  <text x="335" y="136" text-anchor="middle" font-size="12" font-weight="bold" fill="#17a2b8">FastAPI</text>
+  <text x="335" y="153" text-anchor="middle" font-size="11" fill="#444">Python</text>
+
+  <!-- Arrow down -->
+  <line x1="335" y1="165" x2="335" y2="210" stroke="#666" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- DuckDB -->
+  <rect x="255" y="210" width="160" height="50" rx="8" fill="#fff3cd" stroke="#ffc107" stroke-width="1.5"/>
+  <text x="335" y="231" text-anchor="middle" font-size="12" font-weight="bold" fill="#856404">DuckDB</text>
+  <text x="335" y="248" text-anchor="middle" font-size="11" fill="#444">+ ducklake ext.</text>
+
+  <!-- Arrow down -->
+  <line x1="335" y1="260" x2="335" y2="305" stroke="#666" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Katalog + Parquet -->
+  <rect x="180" y="305" width="140" height="50" rx="8" fill="#d4edda" stroke="#28a745" stroke-width="1.5"/>
+  <text x="250" y="326" text-anchor="middle" font-size="11" font-weight="bold" fill="#155724">katalog.duckdb</text>
+  <text x="250" y="343" text-anchor="middle" font-size="10" fill="#444">Katalogfil</text>
+
+  <rect x="330" y="305" width="75" height="50" rx="8" fill="#d4edda" stroke="#28a745" stroke-width="1.5"/>
+  <text x="367" y="326" text-anchor="middle" font-size="11" font-weight="bold" fill="#155724">Parquet</text>
+  <text x="367" y="343" text-anchor="middle" font-size="10" fill="#444">Filer</text>
+
+  <!-- Persistent disk -->
+  <rect x="170" y="375" width="250" height="40" rx="8" fill="#e2e3e5" stroke="#6c757d" stroke-width="1.5"/>
+  <text x="295" y="393" text-anchor="middle" font-size="11" font-weight="bold" fill="#495057">💾 Persistent volym</text>
+  <text x="295" y="408" text-anchor="middle" font-size="10" fill="#666">KTH Cloud disk</text>
+
+  <!-- Deployments count -->
+  <rect x="55" y="440" width="330" height="25" rx="6" fill="#cfe2ff"/>
+  <text x="220" y="457" text-anchor="middle" font-size="11" fill="#0d6efd">✓ 1 deployment (datalaken) + klienter</text>
+
+  <!-- ── RIGHT: Gruppens lösning ─────────────────────── -->
+  <rect x="480" y="55" width="390" height="420" rx="12" fill="white" stroke="#dc3545" stroke-width="2"/>
+  <rect x="480" y="55" width="390" height="40" rx="12" fill="#dc3545"/>
+  <rect x="480" y="83" width="390" height="12" fill="#dc3545"/>
+  <text x="675" y="82" text-anchor="middle" font-size="14" font-weight="bold" fill="white">Gruppens lösning (GitLab)</text>
+
+  <!-- Java app -->
+  <rect x="510" y="115" width="130" height="50" rx="8" fill="#f8d7da" stroke="#dc3545" stroke-width="1.5"/>
+  <text x="575" y="136" text-anchor="middle" font-size="12" font-weight="bold" fill="#dc3545">Java App</text>
+  <text x="575" y="153" text-anchor="middle" font-size="11" fill="#444">Spring Boot</text>
+
+  <!-- Arrow JDBC -->
+  <line x1="640" y1="140" x2="690" y2="140" stroke="#666" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="665" y="132" text-anchor="middle" font-size="10" fill="#666">JDBC</text>
+
+  <!-- DuckDB -->
+  <rect x="690" y="115" width="130" height="50" rx="8" fill="#fff3cd" stroke="#ffc107" stroke-width="1.5"/>
+  <text x="755" y="136" text-anchor="middle" font-size="12" font-weight="bold" fill="#856404">DuckDB</text>
+  <text x="755" y="153" text-anchor="middle" font-size="11" fill="#444">+ ducklake ext.</text>
+
+  <!-- Arrow down -->
+  <line x1="755" y1="165" x2="755" y2="210" stroke="#666" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="575" y1="165" x2="575" y2="280" stroke="#666" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- PostgreSQL -->
+  <rect x="510" y="280" width="130" height="50" rx="8" fill="#e2d9f3" stroke="#6f42c1" stroke-width="1.5"/>
+  <text x="575" y="301" text-anchor="middle" font-size="12" font-weight="bold" fill="#6f42c1">PostgreSQL</text>
+  <text x="575" y="318" text-anchor="middle" font-size="11" fill="#444">Katalog</text>
+
+  <!-- MinIO -->
+  <rect x="680" y="210" width="140" height="50" rx="8" fill="#fde8d8" stroke="#fd7e14" stroke-width="1.5"/>
+  <text x="750" y="231" text-anchor="middle" font-size="12" font-weight="bold" fill="#fd7e14">MinIO / S3</text>
+  <text x="750" y="248" text-anchor="middle" font-size="11" fill="#444">Parquet-filer</text>
+
+  <!-- Arrows to storages -->
+  <line x1="755" y1="260" x2="755" y2="305" stroke="#666" stroke-width="1.5" stroke-dasharray="4"/>
+
+  <!-- Persistent disk -->
+  <rect x="620" y="305" width="180" height="40" rx="8" fill="#d4edda" stroke="#28a745" stroke-width="1.5"/>
+  <text x="710" y="323" text-anchor="middle" font-size="11" font-weight="bold" fill="#155724">💾 MinIO bucket</text>
+  <text x="710" y="338" text-anchor="middle" font-size="10" fill="#444">Objekt-lagring (S3)</text>
+
+  <!-- Deployments count -->
+  <rect x="495" y="375" width="355" height="40" rx="6" fill="#f8d7da"/>
+  <text x="672" y="393" text-anchor="middle" font-size="11" fill="#dc3545">⚠ 3 deployments:</text>
+  <text x="672" y="408" text-anchor="middle" font-size="10" fill="#dc3545">Java App + PostgreSQL + MinIO</text>
+
+  <!-- No HTTP layer note -->
+  <rect x="495" y="422" width="355" height="25" rx="6" fill="#fff3cd"/>
+  <text x="672" y="439" text-anchor="middle" font-size="11" fill="#856404">Ingen HTTP-mellanhand — direkt JDBC</text>
+
+  <!-- Arrow marker -->
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+    </marker>
+  </defs>
+
+</svg>
