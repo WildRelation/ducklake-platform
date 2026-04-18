@@ -2,11 +2,11 @@
 
 ## Introduktion
 
-I denna tutorial ansluter vi till en färdig datalake som redan är driftsatt på **KTH Cloud**. Du behöver inte skriva eller förstå någon Python-kod — datalaken körs som en Docker-container och du ansluter till den via **HTTP** med Java.
+I denna tutorial ansluter vi till en datalake som är driftsatt på **KTH Cloud** och skriver en Java-klient som kommunicerar med den via HTTP. Datalaken exponerar ett REST API byggt med FastAPI (Python) — du behöver inte förstå Python, bara använda API:et.
 
 ### Hur fungerar det?
 
-DuckLake-filerna (Parquet + katalog) ligger på en persistent disk i molnet. En FastAPI-server exponerar datan som ett REST API. Du ansluter till det API:et precis som du skulle ansluta till vilken annan webbtjänst som helst.
+DuckLake-filerna (Parquet + katalog) ligger på en persistent disk i molnet. En FastAPI-server exponerar datan som ett REST API. Du ansluter precis som du skulle ansluta till vilken annan webbtjänst som helst.
 
 ```
 Din Java-app  →  HTTP  →  Datalake API  →  DuckLake-filer
@@ -17,9 +17,9 @@ Din Java-app  →  HTTP  →  Datalake API  →  DuckLake-filer
 ## Förutsättningar
 
 - Java 11 eller senare (HttpClient är inbyggt)
-- Docker
-- Ett konto på [KTH Cloud](https://app.cloud.cbh.kth.se)
-- Ett GitHub-konto
+- En driftsatt datalake — antingen:
+  - **Egen:** följ [TUTORIAL-PYTHON.md](TUTORIAL-PYTHON.md) för att sätta upp din egen
+  - **Delad:** använd en URL som du fått av din lärare
 
 ---
 
@@ -39,34 +39,23 @@ Din Java-app  →  HTTP  →  Datalake API  →  DuckLake-filer
 
 ---
 
-## Steg 1 — Driftsätt datalaken på KTH Cloud
+## Steg 1 — Verifiera att datalaken fungerar
 
-Du behöver inte bygga datalaken själv — använd den färdiga Docker-imagen.
+Innan du börjar koda behöver du ha en datalake-URL. Öppna följande i webbläsaren:
 
-1. Gå till [app.cloud.cbh.kth.se](https://app.cloud.cbh.kth.se) → **New deployment**
-2. Fyll i:
-   - **Image:** `ghcr.io/<ditt-github-användarnamn>/<repo-namn>:latest`
-   - **Port:** `8000`
-   - **Visibility:** Public
-3. Lägg till **persistent storage**:
-   - Name: `ducklake-data`
-   - App path: `/app/data`
-   - Storage path: `/ducklake-data`
-4. Lägg till **miljövariabler**:
-   - `CATALOG_PATH` = `/app/data/katalog.duckdb`
-   - `DATA_PATH` = `/app/data/lake/`
-   - `API_KEY` = `<ditt-hemliga-lösenord>` ← **välj ett eget lösenord**
-5. Spara — datalaken är nu live på `https://<deployment-namn>.app.cloud.cbh.kth.se`
+```
+https://<datalake-url>/api/kunder
+```
 
-> **Varför persistent storage?** DuckLake lagrar data som filer. Utan en persistent volym försvinner all data varje gång containern startas om.
+Du ska se en JSON-lista med kunder. Om du ser det är datalaken redo.
 
-Verifiera att allt fungerar genom att öppna `https://<deployment-namn>.app.cloud.cbh.kth.se/api/kunder` i webbläsaren — du ska se en JSON-lista med kunder.
+Exempel: `https://misty-abnormally-educated.app.cloud.cbh.kth.se/api/kunder`
 
-Exempel på en live datalake: `https://misty-abnormally-educated.app.cloud.cbh.kth.se`
+> Har du ingen datalake ännu? Följ [TUTORIAL-PYTHON.md](TUTORIAL-PYTHON.md) för att bygga och driftsätta en.
 
 ---
 
-## Steg 2 — Tillgängliga endpoints
+## Steg 2 — Tillgängliga endpoints i datalaken
 
 | Metod | Endpoint | Kräver API-nyckel | Beskrivning |
 |-------|----------|-------------------|-------------|
